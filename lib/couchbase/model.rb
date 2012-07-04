@@ -361,6 +361,7 @@ module Couchbase
     #
     # @since 0.0.1
     #
+    # @param [Hash] Additional options to pass to Couchbase::Bucket#add
     # @return [Couchbase::Model] newly created object
     #
     # @raise [Couchbase::Error::KeyExists] if model with the same +id+
@@ -369,9 +370,9 @@ module Couchbase
     # @example Create the instance of the Post model
     #   p = Post.new(:title => 'Hello world', :draft => true)
     #   p.create
-    def create
+    def create(opts={})
       @id ||= Couchbase::Model::UUID.generator.next(1, model.thread_storage[:uuid_algorithm])
-      model.bucket.add(@id, attributes_with_values)
+      model.bucket.add(@id, attributes_with_values, opts)
       self
     end
 
@@ -379,15 +380,16 @@ module Couchbase
     #
     # @since 0.0.1
     #
+    # @param  [Hash] Additional options to pass to Couchbase::Bucket#set, e.g. :ttl => 10.
     # @return [Couchbase::Model] The saved object
     #
     # @example Update the Post model
     #   p = Post.find('hello-world')
     #   p.draft = false
-    #   p.save
-    def save
-      return create if new?
-      model.bucket.set(@id, attributes_with_values)
+    #   p.save(:ttl => 10)
+    def save(opts={})
+      return create(opts) if new?
+      model.bucket.set(@id, attributes_with_values, opts)
       self
     end
 
@@ -398,9 +400,9 @@ module Couchbase
     # @param [Hash] attrs Attribute value pairs to use for the updated
     #               version
     # @return [Couchbase::Model] The updated object
-    def update(attrs)
+    def update(attrs, opts={})
       update_attributes(attrs)
-      save
+      save(opts)
     end
 
     # Delete this object from the bucket
